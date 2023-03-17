@@ -13,10 +13,10 @@ import edu.lu.uni.serval.tbar.utils.SuspiciousPosition;
  */
 public interface IFixer {
 
-	public List<SuspiciousPosition> readSuspiciousCodeFromFile();
+	List<SuspiciousPosition> readSuspiciousCodeFromFile();
 	
-	public List<SuspCodeNode> parseSuspiciousCode(SuspiciousPosition suspiciousCode);
+	List<SuspCodeNode> parseSuspiciousCode(SuspiciousPosition suspiciousCode);
 
-	public void fixProcess();
+	void fixProcess();
 	
 }

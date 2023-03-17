@@ -22,6 +22,7 @@ public class ShellUtils {
 	public static String shellRun(List<String> asList, String buggyProject, int type) throws IOException {
 		String fileName;
         String cmd;
+        System.out.println(asList.get(0));
         if (System.getProperty("os.name").toLowerCase().startsWith("win")){
             fileName = Configuration.TEMP_FILES_PATH + buggyProject + ".bat";
             cmd = Configuration.TEMP_FILES_PATH + buggyProject + ".bat";

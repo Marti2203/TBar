@@ -9,6 +9,7 @@ import java.util.List;
 import edu.lu.uni.serval.tbar.utils.FileHelper;
 import edu.lu.uni.serval.tbar.utils.JavaLibrary;
 import edu.lu.uni.serval.tbar.utils.PathUtils;
+import edu.lu.uni.serval.tbar.utils.ShellUtils;
 
 /**
  * Prepare data for fault localization, program compiling and testing.
@@ -37,10 +38,7 @@ public class DataPreparer {
     }
     
     public void prepareData(String buggyProject){
-//		libPath.add(FromString.class.getProtectionDomain().getCodeSource().getLocation().getFile());
-//		libPath.add(EasyMock.class.getProtectionDomain().getCodeSource().getLocation().getFile());
-//		libPath.add(IOUtils.class.getProtectionDomain().getCodeSource().getLocation().getFile());
-		
+
 		loadPaths(buggyProject);
 		
 		if (!checkProjectDirectories()){
@@ -55,7 +53,7 @@ public class DataPreparer {
 
 	private void loadPaths(String buggyProject) {
 		String projectDir = buggyProjectParentPath;
-		List<String> paths = PathUtils.getSrcPath(buggyProject);
+		List<String> paths = PathUtils.getSrcPath();
 		classPath = projectDir + buggyProject + paths.get(0);
 		testClassPath = projectDir + buggyProject + paths.get(1);
 		srcPath = projectDir + buggyProject + paths.get(2);
@@ -95,23 +93,6 @@ public class DataPreparer {
 
 	private void loadTestCases() {
 		testCases = new TestClassesFinder().findIn(JavaLibrary.classPathFrom(testClassPath + ":" + classPath), false);
-//		List<File> testCasesFiles = FileHelper.getAllFiles(testClassPath, ".class");
-////		testCasesFiles.addAll(FileHelper.getAllFiles(testClassPath, "Tests.class"));
-//		StringBuilder b = new StringBuilder();
-//		List<String> testCaseNames = new ArrayList<>();
-//		int i = testCasesFiles.get(0).getPath().indexOf(testClassPath) + testClassPath.length();
-//		for (File file : testCasesFiles) {
-//			String fileName = file.getName();
-//			if (fileName.contains("Test") && !fileName.contains("$")) {
-////			if (fileName.startsWith("Test") || fileName.endsWith("Test.class")) {//Time
-//				String filePath = file.getPath();
-//				filePath = filePath.substring(i, filePath.lastIndexOf(".")).replace("/", ".");
-//				testCaseNames.add(filePath);
-//				b.append(filePath).append("\n");
-//			}
-//		}
-//		FileHelper.outputToFile("log/testcases_2.txt", b, false);
-//		testCases = testCaseNames.toArray(new String[testCaseNames.size()]);
 		Arrays.sort(testCases);
 	}
 

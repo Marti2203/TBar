@@ -52,12 +52,12 @@ public class TBarFixer_NFL extends TBarFixer {
 	
 	private static Logger log = LoggerFactory.getLogger(TBarFixer_NFL.class);
 	
-	public TBarFixer_NFL(String path, String projectName, int bugId, String defects4jPath) {
-		super(path, projectName, bugId, defects4jPath);
+	public TBarFixer_NFL(String path, String projectName, String defects4jPath) {
+		super(path, projectName, defects4jPath);
 	}
 	
-	public TBarFixer_NFL(String path, String metric, String projectName, int bugId, String defects4jPath) {
-		super(path, metric, projectName, bugId, defects4jPath);
+	public TBarFixer_NFL(String path, String metric, String projectName, String defects4jPath) {
+		super(path, metric, projectName, defects4jPath);
 	}
 
 	@Override

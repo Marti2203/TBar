@@ -1,0 +1,4 @@
+Failing tests: 3
+  - com.codex.SolutionTest::test2
+  - com.codex.SolutionTest::test4
+  - com.codex.SolutionTest::test7

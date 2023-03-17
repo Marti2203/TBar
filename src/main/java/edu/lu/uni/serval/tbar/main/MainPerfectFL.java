@@ -50,17 +50,8 @@ public class MainPerfectFL {
 	}
 
 	public static void fixBug(String bugDataPath, String defects4jHome, String bugIdStr, boolean isTestFixPatterns) {
-		String[] elements = bugIdStr.split("_");
-		String projectName = elements[0];
-		int bugId;
-		try {
-			bugId = Integer.valueOf(elements[1]);
-		} catch (NumberFormatException e) {
-			System.err.println("Please input correct buggy project ID, such as \"Chart_1\".");
-			return;
-		}
 		
-		TBarFixer fixer = new TBarFixer(bugDataPath, projectName, bugId, defects4jHome); 
+		TBarFixer fixer = new TBarFixer(bugDataPath, bugIdStr, defects4jHome);
 		fixer.dataType = "TBar";
 		fixer.isTestFixPatterns = isTestFixPatterns;
 		switch (granularity) {

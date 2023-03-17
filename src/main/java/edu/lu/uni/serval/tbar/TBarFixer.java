@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import edu.lu.uni.serval.jdt.tree.ITree;
 import edu.lu.uni.serval.tbar.config.Configuration;
 import edu.lu.uni.serval.tbar.context.ContextReader;
-import edu.lu.uni.serval.tbar.fixpatterns.CNIdiomNoSuperCall;
 import edu.lu.uni.serval.tbar.fixpatterns.ClassCastChecker;
 import edu.lu.uni.serval.tbar.fixpatterns.ConditionalExpressionMutator;
 import edu.lu.uni.serval.tbar.fixpatterns.DataTypeReplacer;
@@ -52,12 +51,12 @@ public class TBarFixer extends AbstractFixer {
 	
 	private static Logger log = LoggerFactory.getLogger(TBarFixer.class);
 	
-	public TBarFixer(String path, String projectName, int bugId, String defects4jPath) {
-		super(path, projectName, bugId, defects4jPath);
+	public TBarFixer(String path, String buggyProject, String defects4jPath) {
+		super(path, buggyProject, defects4jPath);
 	}
 	
-	public TBarFixer(String path, String metric, String projectName, int bugId, String defects4jPath) {
-		super(path, metric, projectName, bugId, defects4jPath);
+	public TBarFixer(String path, String metric, String projectName, String defects4jPath) {
+		super(path, metric, projectName, defects4jPath);
 	}
 
 	@Override
@@ -103,12 +102,13 @@ public class TBarFixer extends AbstractFixer {
 				
 		        // Match fix templates for this suspicious code with its context information.
 				fixWithMatchedFixTemplates(scn, distinctContextInfo);
-		        
-				if (!isTestFixPatterns && minErrorTest == 0) break;
-				if (this.patchId >= 10000) break;
 			}
-			if (!isTestFixPatterns && minErrorTest == 0) break;
-			if (this.patchId >= 10000) break;
+			if (!isTestFixPatterns && minErrorTest == 0){
+				break;
+			}
+			if (this.patchId >= 10000){
+				break;
+			}
         }
 		log.info("=======TBar: Finish off fixing======");
 		
@@ -134,7 +134,7 @@ public class TBarFixer extends AbstractFixer {
 	            	for (String lineStr : lineStrArr) {
 	    				if (lineStr.contains("-")) {
 	    					String[] subPos = lineStr.split("-");
-	    					for (int line = Integer.valueOf(subPos[0]), endLine = Integer.valueOf(subPos[1]); line <= endLine; line ++) {
+	    					for (int line = Integer.parseInt(subPos[0]), endLine = Integer.parseInt(subPos[1]); line <= endLine; line ++) {
 	    						SuspiciousPosition sp = new SuspiciousPosition();
 	    		            	sp.classPath = classPath;
 	    		            	sp.lineNumber = line;
@@ -143,7 +143,7 @@ public class TBarFixer extends AbstractFixer {
 	    				} else {
 	    					SuspiciousPosition sp = new SuspiciousPosition();
 	    	            	sp.classPath = classPath;
-	    	            	sp.lineNumber = Integer.valueOf(lineStr);
+	    	            	sp.lineNumber = Integer.parseInt(lineStr);
 	    	            	suspiciousCodeList.add(sp);
 	    				}
 	    			}
@@ -178,7 +178,7 @@ public class TBarFixer extends AbstractFixer {
 	}
 	
 	public List<SuspiciousPosition> readSuspiciousCodeFromFile(List<String> buggyFileList) {
-		File suspiciousFile = null;
+		File suspiciousFile;
 		String suspiciousFilePath = "";
 		if (this.suspCodePosFile == null) {
 			suspiciousFilePath = Configuration.suspPositionsFilePath;
@@ -200,13 +200,13 @@ public class TBarFixer extends AbstractFixer {
 		try {
 			FileReader fileReader = new FileReader(suspiciousFile);
             BufferedReader reader = new BufferedReader(fileReader);
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
             	String[] elements = line.split("@");
             	if (!buggyFileList.contains(elements[0])) continue;
             	SuspiciousPosition sp = new SuspiciousPosition();
             	sp.classPath = elements[0];
-            	sp.lineNumber = Integer.valueOf(elements[1]);
+            	sp.lineNumber = Integer.parseInt(elements[1]);
             	suspiciousCodeList.add(sp);
             }
             reader.close();
@@ -222,7 +222,7 @@ public class TBarFixer extends AbstractFixer {
 
 
 	public List<SuspiciousPosition> readSuspiciousCodeFromFile() {
-		File suspiciousFile = null;
+		File suspiciousFile;
 		String suspiciousFilePath = "";
 		if (this.suspCodePosFile == null) {
 			suspiciousFilePath = Configuration.suspPositionsFilePath;
@@ -452,16 +452,9 @@ public class TBarFixer extends AbstractFixer {
 				fixedStatus = 0;
 				return;
 			}
-			
-			ft = new StatementRemover();
-			if (isTestFixPatterns) dataType = readDirectory() + "/StatementRemover";
-			generateAndValidatePatches(ft, scn);
-			if (!isTestFixPatterns && this.minErrorTest == 0) return;
-			if (this.fixedStatus == 2) {
-				fixedStatus = 0;
-				return;
-			}
-			
+
+			statementRemove(scn);
+
 			ft = new StatementInserter();
 			if (isTestFixPatterns) dataType = readDirectory() + "/StatementInserter";
 			generateAndValidatePatches(ft, scn);
@@ -471,17 +464,22 @@ public class TBarFixer extends AbstractFixer {
 				return;
 			}
 		} else {
-			ft = new StatementRemover();
-			if (isTestFixPatterns) dataType = readDirectory() + "/StatementRemover";
-			generateAndValidatePatches(ft, scn);
-			if (!isTestFixPatterns && this.minErrorTest == 0) return;
-			if (this.fixedStatus == 2) {
-				fixedStatus = 0;
-				return;
-			}
+			statementRemove(scn);
 		}
 	}
-	
+
+	private void statementRemove(SuspCodeNode scn) {
+		FixTemplate ft;
+		ft = new StatementRemover();
+		if (isTestFixPatterns) dataType = readDirectory() + "/StatementRemover";
+		generateAndValidatePatches(ft, scn);
+		if (!isTestFixPatterns && this.minErrorTest == 0) return;
+		if (this.fixedStatus == 2) {
+			fixedStatus = 0;
+			return;
+		}
+	}
+
 	private String readDirectory() {
 		int index = dataType.indexOf("/");
 		if (index > -1) dataType = dataType.substring(0, index);

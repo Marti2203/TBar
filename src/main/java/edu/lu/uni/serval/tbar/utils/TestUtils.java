@@ -29,44 +29,7 @@ public class TestUtils {
         }
         return errorNum;
 	}
-	
-//	public static int getFailTestNumInProject(String buggyProject, List<String> failedTests, String classPath,
-//			String testClassPath, String[] testCasesArray){
-//		StringBuilder builder = new StringBuilder();
-//		for (String testCase : testCasesArray) {
-//			builder.append(testCase).append(" ");
-//		}
-//		String testCases = builder.toString();
-//		
-//		String testResult = "";
-//		try {
-//			testResult = ShellUtils.shellRun(Arrays.asList("java -cp " + PathUtils.buildClassPath(classPath, testClassPath)
-//					+ " org.junit.runner.JUnitCore " + testCases), buggyProject);
-//		} catch (IOException e) {
-////			e.printStackTrace();
-//		}
-//		
-//        if (testResult.equals("")){//error occurs in run
-//            return Integer.MAX_VALUE;
-//        }
-//        if (!testResult.contains("Failing tests:")){
-//            return Integer.MAX_VALUE;
-//        }
-//        int errorNum = 0;
-//        String[] lines = testResult.trim().split("\n");
-//        for (String lineString: lines){
-//            if (lineString.startsWith("Failing tests:")){
-//                errorNum =  Integer.valueOf(lineString.split(":")[1].trim());
-//                if (errorNum == 0) break;
-//            } else if (lineString.startsWith("Running ")) {
-//            	break;
-//            } else {
-//            	failedTests.add(lineString);
-//            }
-//        }
-//        return errorNum;
-//	}
-	
+
 	public static int compileProjectWithDefects4j(String projectName, String defects4jPath) {
 		String compileResults = getDefects4jResult(projectName, defects4jPath, "compile");
 		String[] lines = compileResults.split("\n");

@@ -37,17 +37,8 @@ public class Main_NFL {
 		Configuration.outputPath += "NFL/";
 		String suspiciousFileStr = Configuration.suspPositionsFilePath;
 		
-		String[] elements = bugIdStr.split("_");
-		String projectName = elements[0];
-		int bugId;
-		try {
-			bugId = Integer.valueOf(elements[1]);
-		} catch (NumberFormatException e) {
-			System.err.println("Please input correct buggy project ID, such as \"Chart_1\".");
-			return;
-		}
 		
-		AbstractFixer fixer = new TBarFixer_NFL(bugDataPath, projectName, bugId, defects4jHome);
+		AbstractFixer fixer = new TBarFixer_NFL(bugDataPath, bugIdStr, defects4jHome);
 		fixer.dataType = "TBar";
 		fixer.metric = Configuration.faultLocalizationMetric;
 		fixer.suspCodePosFile = new File(suspiciousFileStr);

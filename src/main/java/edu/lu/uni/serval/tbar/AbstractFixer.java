@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,7 +52,7 @@ public abstract class AbstractFixer implements IFixer {
 	public File suspCodePosFile = null;     // The file containing suspicious code positions localized by FL tools.
 	protected DataPreparer dp;              // The needed data of buggy program for compiling and testing.
 	
-	private String failedTestCaseClasses = ""; // Classes of the failed test cases before fixing.
+	private String failedTestCaseClasses = System.getenv("FAILING_TESTS"); // Classes of the failed test cases before fixing.
 	// All specific failed test cases after testing the buggy project with defects4j command in Java code before fixing.
 	protected List<String> failedTestStrList = new ArrayList<>();
 	// All specific failed test cases after testing the buggy project with defects4j command in terminal before fixing.
@@ -68,42 +70,63 @@ public abstract class AbstractFixer implements IFixer {
 	
 	public boolean isTestFixPatterns = false;
 	
-	public AbstractFixer(String path, String projectName, int bugId, String defects4jPath) {
+	public AbstractFixer(String path, String buggyProject, String defects4jPath) {
 		this.path = path;
-		this.buggyProject = projectName + "_" + bugId;
+		this.buggyProject = buggyProject;
 		fullBuggyProjectPath = path + buggyProject;
 		this.defects4jPath = defects4jPath;
-//		int compileResult = TestUtils.compileProjectWithDefects4j(fullBuggyProjectPath, this.defects4jPath);
-//      if (compileResult == 1) {
-//      	log.debug(buggyProject + " ---Fixer: fix fail because of compile fail! ");
-//      }
-		
-		TestUtils.checkout(this.fullBuggyProjectPath);
-//		if (FileHelper.getAllFiles(fullBuggyProjectPath + PathUtils.getSrcPath(buggyProject).get(0), ".class").isEmpty()) {
-			TestUtils.compileProjectWithDefects4j(fullBuggyProjectPath, defects4jPath);
-//		}
-		minErrorTest = TestUtils.getFailTestNumInProject(fullBuggyProjectPath, defects4jPath, failedTestStrList);
-		if (minErrorTest == Integer.MAX_VALUE) {
-			TestUtils.compileProjectWithDefects4j(fullBuggyProjectPath, defects4jPath);
-			minErrorTest = TestUtils.getFailTestNumInProject(fullBuggyProjectPath, defects4jPath, failedTestStrList);
+
+		// Read paths of the buggy project.
+		if(new File (fullBuggyProjectPath+"/pom.xml").exists()){
+			try {
+				ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean test-compile"), buggyProject, 1);
+				this.dp = new DataPreparer(path);
+				dp.prepareData(buggyProject);
+				String results = ShellUtils.shellRun(Arrays.asList("java -cp "
+				+ PathUtils.buildTestClassPath(dp.classPath, dp.testClassPath)
+				+ " org.junit.runner.JUnitCore " + this.failedTestCaseClasses), buggyProject, 2);
+				
+				if (!results.contains("java.lang.NoClassDefFoundError")) {
+					List<String> tempFailedTestCases = readTestResults(results);
+					minErrorTest = tempFailedTestCases.size();
+				}
+				
+			} catch (IOException e) {
+				log.debug(buggyProject + " ---Fixer: fail to compile/execute test cases when initialization");
+			}
 		}
+		else{
+			TestUtils.checkout(this.fullBuggyProjectPath);
+			//		if (FileHelper.getAllFiles(fullBuggyProjectPath + PathUtils.getSrcPath(buggyProject).get(0), ".class").isEmpty()) {
+						TestUtils.compileProjectWithDefects4j(fullBuggyProjectPath, defects4jPath);
+			//		}
+					minErrorTest = TestUtils.getFailTestNumInProject(fullBuggyProjectPath, defects4jPath, failedTestStrList);
+					if (minErrorTest == Integer.MAX_VALUE) {
+						TestUtils.compileProjectWithDefects4j(fullBuggyProjectPath, defects4jPath);
+						minErrorTest = TestUtils.getFailTestNumInProject(fullBuggyProjectPath, defects4jPath, failedTestStrList);
+					}
+			
+		}
+
 		log.info(buggyProject + " Failed Tests: " + this.minErrorTest);
 		minErrorTest_ = minErrorTest;
 		
-		// Read paths of the buggy project.
-		this.dp = new DataPreparer(path);
-		dp.prepareData(buggyProject);
-		
-		readPreviouslyFailedTestCases();
+		if(!new File(fullBuggyProjectPath+"/pom.xml").exists()){
+			// Read paths of the buggy project.
+			this.dp = new DataPreparer(path);
+			dp.prepareData(buggyProject);
+			
+			readPreviouslyFailedTestCases();
+		}
 		
 //		createDictionary();
 	}
 
-	public AbstractFixer(String path, String metric, String projectName, int bugId, String defects4jPath) {
-		this(path, projectName, bugId, defects4jPath);
+	public AbstractFixer(String path, String metric, String projectName, String defects4jPath) {
+		this(path, projectName, defects4jPath);
 		this.metric = metric;
 	}
-	
+
 	private void readPreviouslyFailedTestCases() {
 		String[] failedTestCases = FileHelper.readFile(Configuration.failedTestCasesFilePath + this.buggyProject + ".txt").split("\n");
 		List<String> failedTestCasesList = new ArrayList<>();
@@ -172,7 +195,7 @@ public abstract class AbstractFixer implements IFixer {
             	String[] elements = line.split("@");
             	SuspiciousPosition sp = new SuspiciousPosition();
             	sp.classPath = elements[0];
-            	sp.lineNumber = Integer.valueOf(elements[1]);
+            	sp.lineNumber = Integer.parseInt(elements[1]);
             	suspiciousCodeList.add(sp);
             }
             reader.close();
@@ -248,7 +271,8 @@ public abstract class AbstractFixer implements IFixer {
 		for (Patch patch : patchCandidates) {
 			patch.buggyFileName = scn.suspiciousJavaFile;
 			addPatchCodeToFile(scn, patch);// Insert the patch.
-			if (this.triedPatchCandidates.contains(patch)) continue;
+			if (this.triedPatchCandidates.contains(patch))continue;
+
 			patchId++;
 			if (patchId > 10000) return;
 			this.triedPatchCandidates.add(patch);
@@ -260,65 +284,91 @@ public abstract class AbstractFixer implements IFixer {
 
 			log.debug("Compiling");
 			try {// Compile patched file.
-				ShellUtils.shellRun(Arrays.asList("javac -Xlint:unchecked -source 1.7 -target 1.7 -cp "
-						+ PathUtils.buildCompileClassPath(Arrays.asList(PathUtils.getJunitPath()), dp.classPath, dp.testClassPath)
-						+ " -d " + dp.classPath + " " + scn.targetJavaFile.getAbsolutePath()), buggyProject, 1);
+				if(new File(fullBuggyProjectPath+"/pom.xml").exists()){
+					ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean compile"), buggyProject, 1);
+				}
+				else{	
+					ShellUtils.shellRun(Arrays.asList("javac -Xlint:unchecked -source 1.7 -target 1.7 -cp "
+					+ PathUtils.buildCompileClassPath(Arrays.asList(PathUtils.getJunitPath()), dp.classPath, dp.testClassPath)
+					+ " -d " + dp.classPath + " " + scn.targetJavaFile.getAbsolutePath()), buggyProject, 1);
+				}
 			} catch (IOException e) {
-				log.debug(buggyProject + " ---Fixer: fix fail because of javac exception! ");
+				log.debug(buggyProject + " ---Fixer: fix fail because of failure patch compliation! ");
 				continue;
 			}
+
 			if (!scn.targetClassFile.exists()) { // fail to compile
-				int results = (this.buggyProject.startsWith("Mockito") || this.buggyProject.startsWith("Closure") || this.buggyProject.startsWith("Time")) ? TestUtils.compileProjectWithDefects4j(fullBuggyProjectPath, defects4jPath) : 1;
-				if (results == 1) {
-					log.debug(buggyProject + " ---Fixer: fix fail because of failed compiling! ");
-					continue;
+				if(new File(fullBuggyProjectPath+"/pom.xml").exists()){
+					try{
+						scn.targetJavaFile.delete();
+						scn.targetClassFile.delete();
+						Files.copy(scn.javaBackup.toPath(), scn.targetJavaFile.toPath());
+						ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean test-compile"), buggyProject, 1);
+						log.debug(buggyProject + " ---Fixer: fix fail because of failed compiling! ");
+					}catch (IOException e){
+						e.printStackTrace();
+					}
 				}
+				else{
+					int results = (this.buggyProject.startsWith("Mockito") || this.buggyProject.startsWith("Closure") || this.buggyProject.startsWith("Time")) ? TestUtils.compileProjectWithDefects4j(fullBuggyProjectPath, defects4jPath) : 1;
+					if (results == 1) {
+						log.debug(buggyProject + " ---Fixer: fix fail because of failed compiling! ");
+					}
+				continue;
 			}
 			log.debug("Finish of compiling.");
 			comparablePatches++;
-			
-			log.debug("Test previously failed test cases.");
-			try {
+			log.debug("Running Test Cases");
+			List<String> failedTestsAfterFix;
+			int errorTestAfterFix = 0;
+			try{
+				if(new File(fullBuggyProjectPath+"/pom.xml").exists()){
+					ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean test-compile"), buggyProject, 1);
+				}
 				String results = ShellUtils.shellRun(Arrays.asList("java -cp "
 						+ PathUtils.buildTestClassPath(dp.classPath, dp.testClassPath)
 						+ " org.junit.runner.JUnitCore " + this.failedTestCaseClasses), buggyProject, 2);
-
-				if (results.isEmpty()) {
-//					System.err.println(scn.suspiciousJavaFile + "@" + scn.buggyLine);
-//					System.err.println("Bug: " + buggyCode);
-//					System.err.println("Patch: " + patchCode);
-					continue;
-				} else {
-					if (!results.contains("java.lang.NoClassDefFoundError")) {
-						List<String> tempFailedTestCases = readTestResults(results);
-						tempFailedTestCases.retainAll(this.fakeFailedTestCasesList);
-						if (!tempFailedTestCases.isEmpty()) {
-							if (this.failedTestCasesStrList.size() == 1) continue;
-
-							// Might be partially fixed.
-							tempFailedTestCases.removeAll(this.failedTestCasesStrList);
-							if (!tempFailedTestCases.isEmpty()) continue; // Generate new bugs.
+				if(new File(fullBuggyProjectPath+"/pom.xml").exists()){
+					failedTestsAfterFix = readTestResults(results);
+					errorTestAfterFix = failedTestsAfterFix.size();
+				}
+				else{
+					if (results.isEmpty()) {
+						//					System.err.println(scn.suspiciousJavaFile + "@" + scn.buggyLine);
+						//					System.err.println("Bug: " + buggyCode);
+						//					System.err.println("Patch: " + patchCode);
+											continue;
+					} else {
+						if (!results.contains("java.lang.NoClassDefFoundError")) {
+							List<String> tempFailedTestCases = readTestResults(results);
+							tempFailedTestCases.retainAll(this.fakeFailedTestCasesList);
+							if (!tempFailedTestCases.isEmpty()) {
+								if (this.failedTestCasesStrList.size() == 1) continue;
+	
+								// Might be partially fixed.
+								tempFailedTestCases.removeAll(this.failedTestCasesStrList);
+								if (!tempFailedTestCases.isEmpty()) continue; // Generate new bugs.
+							}
 						}
 					}
 				}
 			} catch (IOException e) {
 				if (!(this.buggyProject.startsWith("Mockito") || this.buggyProject.startsWith("Closure") || this.buggyProject.startsWith("Time"))) {
-					log.debug(buggyProject + " ---Fixer: fix fail because of faile passing previously failed test cases! ");
+					log.debug(buggyProject + " ---Fixer: fix fail because of error when running test cases ");
 					continue;
 				}
 			}
-
-			List<String> failedTestsAfterFix = new ArrayList<>();
-			int errorTestAfterFix = TestUtils.getFailTestNumInProject(fullBuggyProjectPath, this.defects4jPath,
-					failedTestsAfterFix);
-			failedTestsAfterFix.removeAll(this.fakeFailedTestCasesList);
+			
+			//List<String> failedTestsAfterFix = new ArrayList<>();
+			//int errorTestAfterFix = TestUtils.getFailTestNumInProject(fullBuggyProjectPath, this.defects4jPath,
+			//		failedTestsAfterFix);
+			//failedTestsAfterFix.removeAll(this.fakeFailedTestCasesList);
 			
 			if (errorTestAfterFix < minErrorTest) {
-				List<String> tmpFailedTestsAfterFix = new ArrayList<>();
-				tmpFailedTestsAfterFix.addAll(failedTestsAfterFix);
+				List<String> tmpFailedTestsAfterFix = new ArrayList<>(failedTestsAfterFix);
 				tmpFailedTestsAfterFix.removeAll(this.failedTestStrList);
 				if (tmpFailedTestsAfterFix.size() > 0) { // Generate new bugs.
-					log.debug(buggyProject + " ---Generated new bugs: " + tmpFailedTestsAfterFix.size());
+					log.debug("{} {} {} {}",buggyProject,patchId," ---Generated new bugs: ",tmpFailedTestsAfterFix.size());
 					continue;
 				}
 				
