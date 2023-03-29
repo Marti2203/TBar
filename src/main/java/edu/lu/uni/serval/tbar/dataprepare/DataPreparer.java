@@ -54,10 +54,10 @@ public class DataPreparer {
 	private void loadPaths(String buggyProject) {
 		String projectDir = buggyProjectParentPath;
 		List<String> paths = PathUtils.getSrcPath();
-		classPath = projectDir + buggyProject + paths.get(0);
-		testClassPath = projectDir + buggyProject + paths.get(1);
-		srcPath = projectDir + buggyProject + paths.get(2);
-		testSrcPath = projectDir + buggyProject + paths.get(3);
+		classPath = projectDir + buggyProject + "/" + paths.get(0);
+		testClassPath = projectDir + buggyProject + "/"  + paths.get(1);
+		srcPath = projectDir + buggyProject + "/"  + paths.get(2);
+		testSrcPath = projectDir + buggyProject + "/"  + paths.get(3);
 
 		List<File> libPackages = new ArrayList<>();
 		if (new File(projectDir + buggyProject + "/lib/").exists()) {

@@ -222,7 +222,7 @@ public abstract class AbstractFixer implements IFixer {
 		
 		suspiciousClassName = suspiciousJavaFile.substring(0, suspiciousJavaFile.length() - 5).replace("/", ".");
 		
-		String filePath = dp.srcPath + suspiciousJavaFile;
+		String filePath = dp.srcPath + "/" + suspiciousJavaFile;
 		if (!new File(filePath).exists()) return null;
 		File suspCodeFile = new File(filePath);
 		if (!suspCodeFile.exists()) return null;
@@ -288,7 +288,7 @@ public abstract class AbstractFixer implements IFixer {
 					ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean compile"), buggyProject, 1);
 				}
 				else{	
-					ShellUtils.shellRun(Arrays.asList("javac -Xlint:unchecked -source 1.7 -target 1.7 -cp "
+					ShellUtils.shellRun(Arrays.asList("javac -Xlint:unchecked -cp "
 					+ PathUtils.buildCompileClassPath(Arrays.asList(PathUtils.getJunitPath()), dp.classPath, dp.testClassPath)
 					+ " -d " + dp.classPath + " " + scn.targetJavaFile.getAbsolutePath()), buggyProject, 1);
 				}
@@ -319,7 +319,7 @@ public abstract class AbstractFixer implements IFixer {
 			log.debug("Finish of compiling.");
 			comparablePatches++;
 			log.debug("Running Test Cases");
-			List<String> failedTestsAfterFix;
+			List<String> failedTestsAfterFix = new ArrayList<String>();
 			int errorTestAfterFix = 0;
 			try{
 				if(new File(fullBuggyProjectPath+"/pom.xml").exists()){
@@ -416,7 +416,8 @@ public abstract class AbstractFixer implements IFixer {
 			} else {
 				log.debug("Failed Tests after fixing: " + errorTestAfterFix + " " + buggyProject);
 			}
-		}
+		}}
+		
 		
 		try {
 			scn.targetJavaFile.delete();

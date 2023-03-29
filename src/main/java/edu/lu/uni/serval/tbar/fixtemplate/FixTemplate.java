@@ -132,7 +132,7 @@ public abstract class FixTemplate implements IFixTemplate {
 			if (!classPath.endsWith(sourceCodeFileName)) {
 				classPath = classPath.substring(0, classPath.lastIndexOf(sourceCodeFileName + ".")) + sourceCodeFileName;
 			}
-			File javaCodeFile = new File(this.sourceCodePath + classPath.replace(".", "/") + ".java");
+			File javaCodeFile = new File(this.sourceCodePath + "/" + classPath.replace(".", "/") + ".java");
 			JavaCodeFileParser jcfp = new JavaCodeFileParser(javaCodeFile);
 			dic.setAllFields(jcfp.fields);
 			dic.setImportedDependencies(jcfp.importMaps);
