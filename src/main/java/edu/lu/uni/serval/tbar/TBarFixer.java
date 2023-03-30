@@ -84,7 +84,6 @@ public class TBarFixer extends AbstractFixer {
 		for (SuspiciousPosition suspiciousCode : suspiciousCodeList) {
 			List<SuspCodeNode> scns = parseSuspiciousCode(suspiciousCode);
 			if (scns == null) continue;
-
 			for (SuspCodeNode scn : scns) {
 //				log.debug(scn.suspCodeStr);
 				if (triedSuspNode.contains(scn)) continue;

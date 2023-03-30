@@ -305,7 +305,9 @@ public abstract class AbstractFixer implements IFixer {
 						Files.copy(scn.javaBackup.toPath(), scn.targetJavaFile.toPath());
 						ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean test-compile"), buggyProject, 1);
 						log.debug(buggyProject + " ---Fixer: fix fail because of failed compiling! ");
+						continue;
 					}catch (IOException e){
+						log.debug(buggyProject + " ---Fixer: fix fail because of failed compiling! ");
 						e.printStackTrace();
 					}
 				}
@@ -313,8 +315,9 @@ public abstract class AbstractFixer implements IFixer {
 					int results = (this.buggyProject.startsWith("Mockito") || this.buggyProject.startsWith("Closure") || this.buggyProject.startsWith("Time")) ? TestUtils.compileProjectWithDefects4j(fullBuggyProjectPath, defects4jPath) : 1;
 					if (results == 1) {
 						log.debug(buggyProject + " ---Fixer: fix fail because of failed compiling! ");
+						continue;
 					}
-				continue;
+				}
 			}
 			log.debug("Finish of compiling.");
 			comparablePatches++;
@@ -351,6 +354,9 @@ public abstract class AbstractFixer implements IFixer {
 							}
 						}
 					}
+
+					errorTestAfterFix = TestUtils.getFailTestNumInProject(fullBuggyProjectPath, this.defects4jPath, failedTestsAfterFix);
+					failedTestsAfterFix.removeAll(this.fakeFailedTestCasesList);
 				}
 			} catch (IOException e) {
 				if (!(this.buggyProject.startsWith("Mockito") || this.buggyProject.startsWith("Closure") || this.buggyProject.startsWith("Time"))) {
@@ -358,11 +364,6 @@ public abstract class AbstractFixer implements IFixer {
 					continue;
 				}
 			}
-			
-			//List<String> failedTestsAfterFix = new ArrayList<>();
-			//int errorTestAfterFix = TestUtils.getFailTestNumInProject(fullBuggyProjectPath, this.defects4jPath,
-			//		failedTestsAfterFix);
-			//failedTestsAfterFix.removeAll(this.fakeFailedTestCasesList);
 			
 			if (errorTestAfterFix < minErrorTest) {
 				List<String> tmpFailedTestsAfterFix = new ArrayList<>(failedTestsAfterFix);
@@ -416,7 +417,7 @@ public abstract class AbstractFixer implements IFixer {
 			} else {
 				log.debug("Failed Tests after fixing: " + errorTestAfterFix + " " + buggyProject);
 			}
-		}}
+		}
 		
 		
 		try {
