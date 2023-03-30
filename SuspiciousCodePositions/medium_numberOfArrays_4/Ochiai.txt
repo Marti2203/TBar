@@ -1,0 +1,11 @@
+com.codex.Solution@37@0.7071067812
+com.codex.Solution@36@0.7071067812
+com.codex.Solution@29@0.7071067812
+com.codex.Solution@40@0.5773502692
+com.codex.Solution@23@0.5773502692
+com.codex.Solution@22@0.5773502692
+com.codex.Solution@21@0.5773502692
+com.codex.Solution@20@0.5773502692
+com.codex.Solution@17@0.5773502692
+com.codex.Solution@16@0.5773502692
+com.codex.Solution@15@0.5773502692
