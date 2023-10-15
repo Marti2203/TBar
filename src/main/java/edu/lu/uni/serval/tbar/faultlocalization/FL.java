@@ -54,19 +54,6 @@ public class FL {
 	}
 	
 	public void locateSuspiciousCode(String path, String buggyProject, String outputPath, String metricStr) {
-		if (!buggyProject.contains("_")) {
-			System.out.println("Main: cannot recognize project name \"" + buggyProject + "\"");
-			return;
-		}
-
-		String[] elements = buggyProject.split("_");
-		try {
-			Integer.valueOf(elements[elements.length-1]);
-		} catch (NumberFormatException e) {
-			System.out.println("Main: cannot recognize project name \"" + buggyProject + "\"");
-			return;
-		}
-
 		System.out.println(buggyProject);
 		String fullBuggyProjectPath = path + buggyProject;
 		try{
