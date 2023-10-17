@@ -79,7 +79,7 @@ public abstract class AbstractFixer implements IFixer {
 		// Read paths of the buggy project.
 		if(new File (fullBuggyProjectPath+"/pom.xml").exists()){
 			try {
-				ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean test-compile"), buggyProject, 1);
+				// ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean test-compile"), buggyProject, 1);
 				this.dp = new DataPreparer(path);
 				dp.prepareData(buggyProject);
 				String results = ShellUtils.shellRun(Arrays.asList("java -cp "

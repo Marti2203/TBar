@@ -9,9 +9,13 @@ import edu.lu.uni.serval.tbar.utils.ShellUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -54,13 +58,13 @@ public class FL {
 	}
 	
 	public void locateSuspiciousCode(String path, String buggyProject, String outputPath, String metricStr) {
-		System.out.println(buggyProject);
-		String fullBuggyProjectPath = path + buggyProject;
-		try{
-			ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean test-compile"), buggyProject, 1);
-		}catch (IOException e){
-			log.debug(buggyProject + "Fail to compile test");
-		}
+		// System.out.println(buggyProject);
+		// String fullBuggyProjectPath = path + buggyProject;
+		// try{
+		// 	ShellUtils.shellRun(Arrays.asList("mvn -f " + fullBuggyProjectPath + "/pom.xml " + "clean compile test-compile"), buggyProject, 1);
+		// }catch (IOException e){
+		// 	log.debug(buggyProject + "Fail to compile test");
+		// }
 		if (dp == null) {
 			dp = new DataPreparer(path);
 			dp.prepareData(buggyProject);
@@ -70,7 +74,8 @@ public class FL {
 		GZoltarFaultLoclaization gzfl = new GZoltarFaultLoclaization();
 		gzfl.threshold = 0.0;
 		gzfl.maxSuspCandidates = -1;
-		gzfl.srcPath = path + buggyProject + PathUtils.getSrcPath().get(2);
+        String srcPath = path + buggyProject + "/" + PathUtils.getSrcPath().get(2);
+		gzfl.srcPath = srcPath;
 		
 		try {
 			gzfl.localizeSuspiciousCodeWithGZoltar(dp.classPaths, checkNotNull(Arrays.asList("")), dp.testCases);
@@ -97,5 +102,4 @@ public class FL {
 		}
 		FileHelper.outputToFile(outputPath + "/" + buggyProject + "/" + metricStr + ".txt", builder, false);
 	}
-	
 }
