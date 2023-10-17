@@ -52,4 +52,4 @@ WORKDIR /TBar
 
 RUN apt update && apt install -y maven
 
-RUN mvn package
+RUN mvn package dependency:copy-dependencies
