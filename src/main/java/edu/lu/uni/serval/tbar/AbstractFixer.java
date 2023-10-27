@@ -365,7 +365,7 @@ public abstract class AbstractFixer implements IFixer {
 				}
 			}
 			
-			if (errorTestAfterFix < minErrorTest) {
+			if ((errorTestAfterFix < minErrorTest) || (errorTestAfterFix == 0)) {
 				List<String> tmpFailedTestsAfterFix = new ArrayList<>(failedTestsAfterFix);
 				tmpFailedTestsAfterFix.removeAll(this.failedTestStrList);
 				if (tmpFailedTestsAfterFix.size() > 0) { // Generate new bugs.

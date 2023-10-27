@@ -102,12 +102,12 @@ public class TBarFixer extends AbstractFixer {
 		        // Match fix templates for this suspicious code with its context information.
 				fixWithMatchedFixTemplates(scn, distinctContextInfo);
 			}
-			if (!isTestFixPatterns && minErrorTest == 0){
-				break;
-			}
-			if (this.patchId >= 10000){
-				break;
-			}
+			// if (!isTestFixPatterns && minErrorTest == 0){
+			// 	break;
+			// }
+			// if (this.patchId >= 10000){
+			// 	break;
+			// }
         }
 		log.info("=======TBar: Finish off fixing======");
 		
