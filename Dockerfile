@@ -53,3 +53,8 @@ WORKDIR /TBar
 RUN apt update && apt install -y maven
 
 RUN mvn package dependency:copy-dependencies
+
+WORKDIR /TBar/gzoltar
+RUN mvn package dependency:copy-dependencies
+
+WORKDIR /TBar
