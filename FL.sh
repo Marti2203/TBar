@@ -2,10 +2,16 @@
 ROOT=$(pwd)
 PROJECT_DIR=$1
 PROJECT_NAME=$2
+BUILD_SCRIPT=$3
 
 cd $PROJECT_DIR
-mvn clean compile test-compile
-rm -rf .build
+
+if [-z "$BUILD_SCRIPT"]
+then
+    mvn clean compile test-compile
+else
+    $BUILD_SCRIPT
+fi
 
 cd $ROOT
 
@@ -28,12 +34,12 @@ SER_FILE="$PROJECT_DIR/gzoltar.ser"
 echo "Perform offline instrumentation ..."
 
 # Backup original classes
-TEST_BACKUP_DIR="$PROJECT_DIR/.build_test"
+#TEST_BACKUP_DIR="$PROJECT_DIR/.build_test"
 CLASS_BACKUP_DIR="$PROJECT_DIR/.build_classes"
-mv "$TEST_DIR" "$TEST_BACKUP_DIR" || die "Backup of original classes has failed!"
+#mv "$TEST_DIR" "$TEST_BACKUP_DIR" || die "Backup of original classes has failed!"
 mv "$CLASS_DIR" "$CLASS_BACKUP_DIR" || die "Backup of original classes has failed!"
 mkdir -p "$CLASS_DIR"
-mkdir -p "$TEST_DIR"
+#mkdir -p "$TEST_DIR"
 
 # Perform offline instrumentation for test suite
 #java -cp $TEST_BACKUP_DIR:$GZOLTAR_AGENT_RT_JAR:$GZOLTAR_CLI_JAR \
@@ -57,8 +63,8 @@ com.gzoltar.cli.Main runTestMethods \
     --collectCoverage || die "Coverage collection has failed!"
 
 # Restore original test classes
-cp -R $TEST_BACKUP_DIR/* "$TEST_DIR" || die "Restore of original classes has failed!"
-rm -rf "$TEST_BACKUP_DIR"
+#cp -R $TEST_BACKUP_DIR/* "$TEST_DIR" || die "Restore of original classes has failed!"
+#rm -rf "$TEST_BACKUP_DIR"
 
 # Restore original classes
 cp -R $CLASS_BACKUP_DIR/* "$CLASS_DIR" || die "Restore of original classes has failed!"

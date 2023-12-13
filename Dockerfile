@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-MAINTAINER ngocpq <phungquangngoc@gmail.com>
+LABEL maintainer="Martin Mirchev <mmirchev@comp.nus.edu.sg>"
 
 #############################################################################
 # Requirements
@@ -47,11 +47,11 @@ RUN ./init.sh
 ENV PATH="/defects4j/framework/bin:${PATH}"  
 #--------------
 
-COPY . /TBar
-WORKDIR /TBar
-
 RUN apt update && apt install -y maven
 
+COPY . /TBar
+
+WORKDIR /TBar
 RUN mvn package dependency:copy-dependencies
 
 WORKDIR /TBar/gzoltar
